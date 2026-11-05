@@ -1,106 +1,37 @@
 import torch
 import torch.nn as nn
-from collections import OrderedDict
 
-# PAROI_VESICALE
-def CNN_PAROI_VESICALE(F: int, FILTER: int, SPACING: tuple = (1, 1, 3)) -> nn.Module :
-    deepness = None
-    if SPACING == (1.5, )*3 :
-        deepness = 5
-    if SPACING == (3,)*3 :
-        deepness = 4
+def CNN_28x28(F, FILTER) :
+    CNN = nn.Sequential(
+            nn.Conv2d(F,   FILTER *1, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(FILTER *1),
+            nn.ReLU(),
+            nn.Conv2d(FILTER *1, FILTER *2, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(FILTER *2),
+            nn.ReLU(),
+            nn.Conv2d(FILTER *2, FILTER *4, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(FILTER *4),
+            nn.ReLU(),
+            nn.Conv2d(FILTER *4, FILTER *8, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(FILTER *8),
+            nn.ReLU(),
+        )
+    return CNN
 
-    sequential_list = OrderedDict()
-    sequential_list["Conv3d0"] = nn.Conv3d(F,   FILTER *1, kernel_size=3, stride=1, padding=1)
-    for i in range(deepness) : 
-        # sequential_list[f"BatchNorm3d{i+1}"] = nn.BatchNorm3d(FILTER *2**i)
-        sequential_list[f"ReLU{i+1}"] = nn.ReLU()
-        sequential_list[f"Conv3d{i+1}"] = nn.Conv3d(FILTER *2**i,   FILTER *2**(i +1), kernel_size=3, stride=2, padding=1)
-        
-    # sequential_list[f"BatchNorm3d{deepness +1}"] = nn.BatchNorm3d(FILTER *2**deepness)
-    sequential_list[f"ReLU{deepness +1}"] = nn.ReLU()
-    sequential_list[f"Conv3d{deepness +1}"] = nn.Conv3d(FILTER *2**deepness,   FILTER *2**deepness, kernel_size=3, stride=1, padding=1)
-    return nn.Sequential(sequential_list)
-
-def TCNN_PAROI_VESICALE(F: int, FILTER: int, SPACING: tuple = (1, 1, 3)) -> nn.Module :
-    deepness = None
-    padding_cond = None
-    paddings = []
-    sequential_list = OrderedDict()
-    if SPACING == (1, )*3 :
-        deepness = 5
-        padding_cond = (2, 1, 2)
-     
-    elif SPACING == (1.5, )*3 :
-        deepness = 5
-        for i in range(deepness) :
-            if (deepness-i) == 4 :
-                paddings.append(2)
-            elif (deepness-i) == 3 :
-                paddings.append((1, 2, 1))
-            else : 
-                paddings.append(1)
-    elif SPACING == (3, )*3 :
-        deepness = 4
-        padding_cond = 2
-        for i in range(deepness) : 
-            if (deepness-i) != 3 : 
-                paddings.append(1)
-            else :
-                paddings.append(padding_cond)
-
-    
-    for i in range(deepness) :
-        sequential_list[f"Conv3d_{i+1}"] = nn.ConvTranspose3d(FILTER *2**(deepness -i),   FILTER *2**(deepness -1 -i), kernel_size=4, stride=2, padding=paddings[i])
-        sequential_list[f"BatchNorm3d_{i+1}"] = nn.BatchNorm3d(FILTER *2**(deepness -1 -i))
-        sequential_list[f"ReLU_{i+1}"] = nn.ReLU()
-    sequential_list[f"Conv3d_{deepness +1}"] = nn.Conv3d(FILTER,   F, kernel_size=3, stride=1, padding=1)
-    
-    return nn.Sequential(sequential_list)
-
-
-# PAROI_VESICALE
-def CNN_PAROI_RECTALE(F: int, FILTER: int, SPACING: tuple = (1, 1, 1)) -> nn.Module :
-    deepness = None
-    if SPACING == (1.5,)*3 :
-        deepness = 5
-    if SPACING == (3, 3, 3) :
-        deepness = 4
-
-    sequential_list = OrderedDict()
-    sequential_list["Conv3d0"] = nn.Conv3d(F,   FILTER *1, kernel_size=3, stride=1, padding=1)
-    for i in range(deepness) : 
-        # sequential_list[f"BatchNorm3d{i+1}"] = nn.BatchNorm3d(FILTER *2**i)
-        sequential_list[f"ReLU{i+1}"] = nn.ReLU()
-        sequential_list[f"Conv3d{i+1}"] = nn.Conv3d(FILTER *2**i,   FILTER *2**(i +1), kernel_size=3, stride=2, padding=1)
-        
-    # sequential_list[f"BatchNorm3d{deepness +1}"] = nn.BatchNorm3d(FILTER *2**deepness)
-    sequential_list[f"ReLU{deepness +1}"] = nn.ReLU()
-    sequential_list[f"Conv3d{deepness +1}"] = nn.Conv3d(FILTER *2**deepness,   FILTER *2**deepness, kernel_size=3, stride=1, padding=1)
-    return nn.Sequential(sequential_list)
-
-def TCNN_PAROI_RECTALE(F: int, FILTER: int, SPACING: tuple = (3,)*3) -> nn.Module :
-    deepness = None
-    padding_cond = None
-    if SPACING == (1.5,)*3 :
-        deepness = 5
-    elif SPACING == (3,)*3 :
-        deepness = 4
-
-    sequential_list = OrderedDict()
-    for i in range(deepness) : 
-        if deepness == 4 :
-            padding = 2 if (deepness-i) in [0] else 1
-        if deepness == 5 :
-            padding = (2, 1, 2) if (deepness-i) in [0] else 1
-            padding = (2, 1, 1) if (deepness-i) in [3] else 1
-        
-        sequential_list[f"Conv3d_{i+1}"] = nn.ConvTranspose3d(FILTER *2**(deepness -i),   FILTER *2**(deepness -1 -i), kernel_size=4, stride=2, padding=padding)
-        sequential_list[f"BatchNorm3d_{i+1}"] = nn.BatchNorm3d(FILTER *2**(deepness -1 -i))
-        sequential_list[f"ReLU_{i+1}"] = nn.ReLU()
-    sequential_list[f"Conv3d_{deepness +1}"] = nn.Conv3d(FILTER,   F, kernel_size=3, stride=1, padding=1)
-    
-    return nn.Sequential(sequential_list)
+def TCNN_28x28(F, FILTER) :
+    CNN_Transpose = nn.Sequential(
+            nn.ConvTranspose2d(FILTER *8, FILTER *4, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(FILTER *4),
+            nn.ReLU(),
+            nn.ConvTranspose2d(FILTER *4, FILTER *2, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(FILTER *2),
+            nn.ReLU(),
+            nn.ConvTranspose2d(FILTER *2, FILTER, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(FILTER *1),
+            nn.ReLU(),
+            nn.Conv2d(FILTER, F, kernel_size=3, stride=1, padding=1),
+    )
+    return CNN_Transpose
 
 ## Models Encoder-Decoder for 28x28 image datas
 class Encoder(nn.Module):

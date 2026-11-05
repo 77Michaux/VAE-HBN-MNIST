@@ -1,0 +1,326 @@
+
+
+# Bibliothèques
+
+```{r}
+
+library(bnlearn)
+library(data.table)
+library(reshape2)
+library(ggplot2)
+
+```
+
+
+# Chargement des données labels
+
+```{r}
+
+path <- "datas"
+labels <- fread(paste(path, 'RT_labels.csv', sep = '/'), data.table = F, sep = ";",  header = TRUE, index = FALSE)
+labels
+
+```
+
+
+
+```{r}
+names(labels)
+summary(labels)
+
+```
+
+
+```{r}
+
+for(i in 1:length(names(labels))){
+  hist(labels[[i]], breaks = min(50, length(unique(labels[[i]]))), main = colnames(labels)[i], xlab = names(labels)[i])
+}
+
+```
+
+```{r}
+
+sapply(labels, class)
+labels[, c(1)] <- as.factor(labels[, c(1)])
+labels[, c(8)] <- as.numeric(labels[, c(8)])
+labels[, c(9)] <- as.numeric(labels[, c(9)])
+sapply(labels, class)
+
+```
+```{r}
+
+
+
+```
+
+
+
+
+```{r}
+           # number area length thickness slant width height mu_x mu_y sigma_x sigma_y 
+effectifs <- c(10,   7,    7,       5,      5,    5,    5,     5,  5,    5,       5)
+data_disc <- discretize(
+  labels,
+  method  = "hartemink",
+  breaks  = effectifs,
+  ibreaks = 20
+)
+
+
+for(i in 1:10){
+  barplot(table(data_disc[[i]]), main = colnames(labels)[i])
+}
+
+names(data_disc)
+# rm(labels)
+# rm(morpho.mnist)
+
+```
+
+Get Chow Liu E graph
+ 
+```{r}
+
+library(bnlearn)
+library(infotheo)
+
+# 1. Discrétisation initiale grossière
+d0 <- bnlearn::discretize(data, method = "equalfreq", breaks = effectifs)
+
+# 2. Apprentissage de l’arbre de Chow–Liu
+E <- chow.liu(d0)
+
+# 3. Discrétisation Hartemink guidée par ce graphe
+d <- discretize(data, method = "hartemink", breaks = 3)
+
+```
+
+
+
+```{r}
+data_disc
+
+```
+
+
+
+```{r}
+
+data_disc[!duplicated(data_disc[, 1:5]), ]
+prod(effectifs[1:5])
+
+
+```
+
+
+```{r}
+
+labels
+
+```
+
+
+
+```{r}
+for(i in 2:11){
+  levels(data_disc[[i]]) <- 1:length(levels(data_disc[[i]]))
+}
+
+data_disc
+
+
+```
+
+
+```{r}
+
+path <- paste(path, paste0('train-morpho-trunc - ',  paste(effectifs, collapse = "_"), '.csv'), sep = '/')
+path
+
+```
+
+
+
+```{r}
+
+
+write.csv(data_disc, path)
+          
+          
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
