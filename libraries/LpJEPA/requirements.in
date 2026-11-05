@@ -1,0 +1,15 @@
+matplotlib
+mypy
+numpy
+nvidia-ml-py
+pillow
+pip-tools
+pandas
+pydicom
+requests
+scikit-image
+scikit-learn
+torch
+torchinfo
+torchvision
+tqdm

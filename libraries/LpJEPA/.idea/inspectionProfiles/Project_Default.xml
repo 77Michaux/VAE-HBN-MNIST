@@ -1,0 +1,87 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="blinker" />
+          <option value="captum" />
+          <option value="certifi" />
+          <option value="charset-normalizer" />
+          <option value="click" />
+          <option value="contourpy" />
+          <option value="cycler" />
+          <option value="dash" />
+          <option value="filelock" />
+          <option value="flask" />
+          <option value="fonttools" />
+          <option value="fsspec" />
+          <option value="idna" />
+          <option value="importlib-metadata" />
+          <option value="itsdangerous" />
+          <option value="jinja2" />
+          <option value="joblib" />
+          <option value="kiwisolver" />
+          <option value="llvmlite" />
+          <option value="markupsafe" />
+          <option value="matplotlib" />
+          <option value="mpmath" />
+          <option value="narwhals" />
+          <option value="nest-asyncio" />
+          <option value="networkx" />
+          <option value="numba" />
+          <option value="numpy" />
+          <option value="nvidia-ml-py" />
+          <option value="packaging" />
+          <option value="pandas" />
+          <option value="pillow" />
+          <option value="plotly" />
+          <option value="polars" />
+          <option value="polars-runtime-32" />
+          <option value="pyarrow" />
+          <option value="pynndescent" />
+          <option value="pyparsing" />
+          <option value="python-dateutil" />
+          <option value="pytz" />
+          <option value="requests" />
+          <option value="retrying" />
+          <option value="scikit-learn" />
+          <option value="scipy" />
+          <option value="six" />
+          <option value="sympy" />
+          <option value="threadpoolctl" />
+          <option value="torch" />
+          <option value="torchinfo" />
+          <option value="tqdm" />
+          <option value="typing-extensions" />
+          <option value="tzdata" />
+          <option value="umap-learn" />
+          <option value="urllib3" />
+          <option value="werkzeug" />
+          <option value="zipp" />
+          <option value="librt" />
+          <option value="mypy" />
+          <option value="mypy-extensions" />
+          <option value="pathspec" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N803" />
+          <option value="N806" />
+          <option value="N812" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyStubPackagesAdvertiser" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="scipy" />
+          <option value="pandas" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

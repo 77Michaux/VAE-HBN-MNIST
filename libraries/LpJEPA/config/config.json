@@ -1,0 +1,55 @@
+{
+  "data": {
+    "data_dir": "E:/CBCT_enhancement",
+    "data_out": "D:/Projet perso/CBCT_enhancement/DATA",
+    "input_size": [
+      512,
+      512
+    ],
+    "sources_list": ["4DLung", "Pancreas"]
+  },
+  "seed": 29012024,
+  "encoder": {
+    "image_size": 512,
+    "crop_size": 512,
+    "num_views": 5,
+    "d_model": 64,
+    "num_layers": 12,
+    "num_heads": 4,
+    "drop_path_rate": 0.1,
+    "qkv_bias": false,
+    "mlp_ratio": 4,
+    "mlp_drop": 0.2,
+    "dropout": 0.2
+  },
+  "projector": {
+    "d_proj": 64
+  },
+  "rdm_reg": {
+    "num_projs": 256,
+    "mu": -0.1,
+    "sigma": 1.5,
+    "p": 2,
+    "knots": 17,
+    "rdm": false
+  },
+  "loss": {
+    "lambda_inv": 0.99
+  },
+  "training": {
+    "epochs": 500,
+    "warmup_ratio": 0.1,
+    "start_lr": 1e-5,
+    "ref_lr": 5e-3,
+    "final_lr": 1e-8,
+    "resume_from_checkpoint": ""
+  },
+  "logging": {
+    "checkpoint_dir": "checkpoints",
+    "checkpoint_freq": 10
+  },
+  "notifications": {
+    "enabled": true,
+    "ntfy_topic": "rt_lp_jepa_2026"
+  }
+}
