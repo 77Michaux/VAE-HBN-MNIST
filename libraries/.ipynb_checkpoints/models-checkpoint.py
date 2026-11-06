@@ -33,49 +33,17 @@ class VAE_based(nn.Module):
         hat_X = self.Decoder(Z)
         return hat_X, MU, LOGVAR, Z
 
-    def forward(self, X, alpha_dose = 0.5, alpha_paroi = 0.5, beta = 1., gamma = 1.) :
+    def forward(self, X, beta = 1., gamma = 1.) :
         hat_X = MU = LOGVAR = Z = None 
         F = X.shape[1]
-        if F <= 2 :
-            hat_X, MU, LOGVAR, Z = self.pred(X)
-        else : 
-            hat_X, MU, LOGVAR, Z = self.pred(X[:, :]) # (0, 3)
+        hat_X, MU, LOGVAR, Z = self.pred(X)
 
         loss_KLD = KLD(MU, LOGVAR)
         ratio_image = float(X.shape.numel()) /100
-        # ratio_latent = Z.shape.numel()
-        
-        if F == 1 :
-            loss_RECO = BCE(X, hat_X, "sum")
-            loss = loss_RECO -beta*loss_KLD
-            return loss, loss_RECO.item()/ratio_image, -loss_KLD.item()/ratio_image, Z
+        loss_RECO = BCE(X, hat_X, "sum")
+        loss = loss_RECO -beta*loss_KLD
+        return loss, loss_RECO.item()/ratio_image, -loss_KLD.item()/ratio_image, Z
             
-        elif F == 2 :
-            B = X.shape[0]            
-            loss_DOSE_ORGAN = MSE(X[:B//2, 0], hat_X[:B//2, 0], "sum")
-            loss_DOSE_PAROI = MSE(X[B//2:, 0], hat_X[B//2:, 0], "sum")
-            
-            loss_STRUCT_ORGAN = BCE(X[:B//2, 1], hat_X[:B//2, 1], "sum")
-            loss_STRUCT_PAROI = BCE(X[B//2:, 1], hat_X[B//2:, 1], "sum")
-            
-            loss_ORGAN = alpha_dose*loss_DOSE_ORGAN +(1-alpha_dose)*loss_STRUCT_ORGAN
-            loss_PAROI = alpha_dose*loss_DOSE_PAROI +(1-alpha_dose)*loss_STRUCT_PAROI
-            loss = loss_ORGAN *(1-alpha_paroi) + loss_PAROI *alpha_paroi -beta *loss_KLD
-            # loss = loss_DOSE_ORGAN -beta *loss_KLD
-            return loss, loss_DOSE_ORGAN.item()/ratio_image, loss_STRUCT_ORGAN.item()/ratio_image, loss_DOSE_PAROI.item()/ratio_image, loss_STRUCT_PAROI.item()/ratio_image, -loss_KLD.item()/ratio_image, Z
-            
-        else : 
-            loss_DOSE_ORGAN = MSE(X[:, 0], hat_X[:, 0], "sum")
-            loss_DOSE_PAROI = MSE(X[:, 2], hat_X[:, 2], "sum")
-            
-            loss_STRUCT_ORGAN = BCE(X[:, 1], hat_X[:, 1], "sum")
-            loss_STRUCT_PAROI = BCE(X[:, 3], hat_X[:, 3], "sum")
-            
-            loss_ORGAN = alpha_dose*loss_DOSE_ORGAN +(1-alpha_dose)*loss_STRUCT_ORGAN
-            loss_PAROI = alpha_dose*loss_DOSE_PAROI +(1-alpha_dose)*loss_STRUCT_PAROI
-            loss = loss_ORGAN *(1-alpha_paroi) + loss_PAROI *alpha_paroi -beta *loss_KLD
-            # loss = loss_DOSE_ORGAN -beta *loss_KLD
-            return loss, loss_DOSE_ORGAN.item()/ratio_image, loss_STRUCT_ORGAN.item()/ratio_image, loss_DOSE_PAROI.item()/ratio_image, loss_STRUCT_PAROI.item()/ratio_image, -loss_KLD.item()/ratio_image, Z
             
 
 # VAE
@@ -84,8 +52,9 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
         self.vae = VAE_based(Encoder, Decoder)
         
-    def forward(self, X, alpha_dose = 0.5, alpha_paroi = 0.5, beta = 1., gamma = 1.) :
-        return self.vae(X, alpha_dose, alpha_paroi, beta, gamma)[:-1]
+    def forward(self, X, beta = 1.) :
+        return self.vae(X, beta = beta)[:-1]
+
 
 # TCVAE with Covariance loss
 class TCVAE(nn.Module):
@@ -93,8 +62,8 @@ class TCVAE(nn.Module):
         super(TCVAE, self).__init__()
         self.vae = VAE_based(Encoder, Decoder)
 
-    def forward(self, X, alpha_dose = 0.5, alpha_paroi = 0.5, beta = 1., gamma = 1.) :
-        losses  = self.vae(X, alpha_dose, alpha_paroi, beta, gamma)
+    def forward(self, X, beta = 1., gamma = 1.) :
+        losses  = self.vae(X, beta, gamma)
         Z = losses[-1]
         loss_items = losses[1:-1]
         loss = losses[0]
