@@ -6,43 +6,30 @@ import pandas as pd
 import torch
 # from IPython.display import clear_output
 
-
-def get_RT_X(X_STRUCT, X_DOSE) :
-    X_STRUCT = X_STRUCT.astype(np.float32)
-    X_STRUCT[np.where(X_STRUCT > 0)] = 1.
-    
-    X_DOSE = X_DOSE.astype(np.float32) /255
-    X_DOSE = X_STRUCT*X_DOSE.reshape(X_STRUCT.shape)
-    return np.concatenate([X_STRUCT, X_DOSE], axis = 1)
-
-def load_MU_LOGVAR(net, X_train, M, F = 1) :
-    batchsize = 500
-    batch_range_train = range(0, X_train.shape[0] +1, batchsize) # 
-    
+def get_MU_LOGVAR(net, X_train, batchsize = 200) :
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    batchrange = np.arange(0, X_train.shape[0] +1, batchsize)
     MU = []
     LOGVAR = []
-    for i, batch in enumerate(batch_range_train[:-1]) :
-        if i%10 == 9 : print(f"Step {i +1}/{len(batch_range_train) -1}")
-        X = X_train[batch:batch_range_train[i +1]]
-        if F == 1 :
-            X = X.astype(np.float32)/255.
-        elif F == 2 :
-            X = get_RT_X(X, M[batch:batch_range_train[i +1]])
+    for b, batch in enumerate(batchrange[:-1]) :
+        X = X_train[batch:batchrange[b +1]].astype(np.float32) /255.
         X = torch.from_numpy(X)
+        X = X.to(device)
+        _, mu, logvar, _ = net.vae.pred(X)
         
-        Z_MU, Z_LOGVAR = net.vae.Encoder(X)
-        MU.append(Z_MU.detach().numpy())
-        LOGVAR.append(Z_LOGVAR.detach().numpy())
-    
-        # clear_output()
-    return np.concatenate(MU), np.concatenate(LOGVAR)
+        MU.append(mu.detach().numpy())
+        LOGVAR.append(logvar.detach().numpy())
+
+    MU = np.concatenate(MU)
+    LOGVAR = np.concatenate(LOGVAR)
+    return MU, LOGVAR
 
 def get_Asquare(MU, VAR) :
     VAR_MEAN = np.var(MU, axis = 0)
     MEAN_VAR = np.mean(VAR, axis = 0)
     VAR_MEAN.shape, MEAN_VAR.shape
     
-    Asquare = pd.DataFrame(VAR_MEAN/(VAR_MEAN+MEAN_VAR))
+    Asquare = pd.DataFrame(VAR_MEAN/(VAR_MEAN+MEAN_VAR) *100)
     Asquare = Asquare.sort_values(by = 0, ascending=  False).reset_index()
     return Asquare
 
