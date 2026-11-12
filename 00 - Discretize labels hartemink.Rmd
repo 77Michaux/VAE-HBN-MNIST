@@ -6,8 +6,9 @@
 
 library(bnlearn)
 library(data.table)
-library(reshape2)
+# library(reshape2)
 library(ggplot2)
+library(dplyr)
 
 ```
 
@@ -17,7 +18,8 @@ library(ggplot2)
 ```{r}
 
 path <- "datas"
-labels <- fread(paste(path, 'RT_labels.csv', sep = '/'), data.table = F, sep = ";",  header = TRUE, index = FALSE)
+labels <- fread(paste(path, 'MorphoMNIST_Test.csv', sep = '/'), data.table = F, sep = ",",  header = TRUE, index = FALSE)
+labels <- labels[, -6]
 labels
 
 ```
@@ -39,27 +41,20 @@ for(i in 1:length(names(labels))){
 
 ```
 
+
 ```{r}
 
 sapply(labels, class)
-labels[, c(1)] <- as.factor(labels[, c(1)])
-labels[, c(8)] <- as.numeric(labels[, c(8)])
-labels[, c(9)] <- as.numeric(labels[, c(9)])
+labels$number <- as.factor(labels$number)
 sapply(labels, class)
-
-```
-```{r}
-
-
 
 ```
 
 
 
-
 ```{r}
-           # number area length thickness slant width height mu_x mu_y sigma_x sigma_y 
-effectifs <- c(10,   7,    7,       5,      5,    5,    5,     5,  5,    5,       5)
+           #   "area" "thickness" "slant" "width" "height" "number" 
+effectifs <- c(  5,     5,           5,      5,       5,      10)
 data_disc <- discretize(
   labels,
   method  = "hartemink",
@@ -68,7 +63,7 @@ data_disc <- discretize(
 )
 
 
-for(i in 1:10){
+for(i in 1:length(names(labels))){
   barplot(table(data_disc[[i]]), main = colnames(labels)[i])
 }
 
@@ -78,64 +73,22 @@ names(data_disc)
 
 ```
 
-Get Chow Liu E graph
- 
-```{r}
-
-library(bnlearn)
-library(infotheo)
-
-# 1. Discrétisation initiale grossière
-d0 <- bnlearn::discretize(data, method = "equalfreq", breaks = effectifs)
-
-# 2. Apprentissage de l’arbre de Chow–Liu
-E <- chow.liu(d0)
-
-# 3. Discrétisation Hartemink guidée par ce graphe
-d <- discretize(data, method = "hartemink", breaks = 3)
-
-```
-
 
 
 ```{r}
+
 data_disc
 
 ```
 
 
 
-```{r}
-
-data_disc[!duplicated(data_disc[, 1:5]), ]
-prod(effectifs[1:5])
-
-
-```
 
 
 ```{r}
 
-labels
-
-```
-
-
-
-```{r}
-for(i in 2:11){
-  levels(data_disc[[i]]) <- 1:length(levels(data_disc[[i]]))
-}
-
-data_disc
-
-
-```
-
-
-```{r}
-
-path <- paste(path, paste0('train-morpho-trunc - ',  paste(effectifs, collapse = "_"), '.csv'), sep = '/')
+path <- "datas"
+path <- paste(path, paste0('Morpho_test - discrete - intervals - ',  paste(effectifs, collapse = "_"), '.csv'), sep = '/')
 path
 
 ```
@@ -145,7 +98,7 @@ path
 ```{r}
 
 
-write.csv(data_disc, path)
+write.csv(data_disc, path,  row.names = FALSE)
           
           
 ```
@@ -153,11 +106,32 @@ write.csv(data_disc, path)
 
 
 
+```{r}
+
+for(i in 1:5){
+  levels(data_disc[[i]]) <- 0:(length(levels(data_disc[[i]])) -1)
+}
+data_disc
+
+```
+
+
+```{r}
+
+path <- "datas"
+path <- paste(path, paste0('Morpho_test - discrete - ',  paste(effectifs, collapse = "_"), '.csv'), sep = '/')
+path
+
+
+```
 
 
 
+```{r}
 
+write.csv(data_disc, path, row.names = FALSE)
 
+```
 
 
 

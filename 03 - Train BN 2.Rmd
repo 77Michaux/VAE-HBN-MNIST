@@ -1,0 +1,233 @@
+
+
+# Bibliothèques
+
+```{r}
+
+library(bnlearn)
+library(data.table)
+library(reshape2)
+library(ggplot2)
+
+library(visNetwork)
+library(igraph)
+
+```
+
+
+
+# Chargement des données
+
+```{r}
+
+
+# labels
+path <- 'datas'
+latent.path <- "datas/latent_test.csv"
+labels.path <- "datas/Morpho_test - discrete - 5_5_5_5_5_10.csv"
+
+# latents
+path <- 'DATAS/MNIST'
+latent <- fread(latent.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
+data_disc <- fread(labels.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
+
+
+latent
+data_disc
+
+```
+
+
+# Datas <- concat(latents, labels) 
+
+```{r}
+
+c(names(latent), names(data_disc))
+
+data <- cbind(latent, data_disc)
+names(data) <- c(names(latent), names(data_disc))
+data[, names(data_disc)] <- lapply(data[, names(data_disc)], as.factor)
+
+
+head(data)
+
+```
+
+
+# Exclusion des relations continu → discret
+
+```{r}
+
+disc <- names(data)[sapply(data, is.factor)]
+cont <- names(data)[sapply(data, is.numeric)]
+
+blacklist <- expand.grid(from = cont, to = disc)
+
+```
+
+
+
+# Graphe par Bootstrap
+
+```{r}
+
+start.time <- Sys.time()
+
+set.seed(42)
+
+boot <- boot.strength(
+  data = data,
+  R = 500,
+  algorithm = "hc",
+  algorithm.args = list(score = "bic-cg", blacklist = blacklist)
+)
+
+end.time <- Sys.time()
+end.time -start.time
+
+```
+Time difference of 21.19556 mins -> 27 variables - 50 boots
+Time difference of 26 mins -> 29 variables - 50 boots
+Time difference of 44 mins -> 38 variables - 50 boots
+
+
+```{r}
+
+DAG.path <- "datas/DAG.csv"
+write.csv(boot, DAG.path)
+
+
+```
+
+
+
+
+```{r}
+
+th <- bnlearn:::threshold(boot)
+th
+
+boot.kept <- boot[(boot$strength >= th) & (boot$direction >= 0.5), ]
+boot.kept
+
+```
+
+
+th <- bnlearn:::threshold(arcs)
+# Tu selectionnes les arcs
+arcs[(arcs$strength >= th) & (arcs$direction >= 0.5), ]
+
+
+
+arcs <- arcs(bn)
+
+bad <- arcs[
+  arcs[, "from"] %in% cont &
+  arcs[, "to"]   %in% disc,
+]
+
+bad
+
+```{r}
+
+relations_principales <- boot[
+  boot$strength > 0.8 & boot$direction > 0.6,
+]
+relations_principales
+
+```
+
+
+
+```{r}
+
+avg_net <- averaged.network(boot, threshold = 0.95)
+graphviz.plot(avg_net)
+
+```
+
+
+
+```{r}
+
+library(Rgraphviz)
+graphviz.plot(avg_net, highlight = list(arcs = subset(boot, strength > 0.99)[,1:2]))
+
+```
+
+
+
+```{r}
+
+relations_principales[order(-relations_principales$strength -relations_principales$direction), ]
+
+
+```
+
+
+```{r}
+
+avg_net <- averaged.network(boot, threshold = 0.8)
+avg_net 
+
+```
+
+
+```{r}
+
+boots.path <- paste(morpho.mnist.path, 'train-morpho-trunc - 7_7_7_6_5_10 - bootstrap 200.csv', sep = '/')
+boots.path
+
+
+```
+
+
+
+```{r}
+
+write.csv(boot, boots.path)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

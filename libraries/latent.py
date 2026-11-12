@@ -24,6 +24,22 @@ def get_MU_LOGVAR(net, X_train, batchsize = 200) :
     LOGVAR = np.concatenate(LOGVAR)
     return MU, LOGVAR
 
+
+def Z_to_hat_X(net, Z, batchsize = 200) :
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    batchrange = np.arange(0, Z.shape[0] +1, batchsize)
+    hat_X = []
+    for b, batch in enumerate(batchrange[:-1]) :
+        Z_batch = Z[batch:batchrange[b +1]]
+        Z_batch = torch.from_numpy(Z_batch)
+        Z_batch = Z_batch.to(Z_batch)
+        hat_x = net.vae.Decoder(Z_batch)
+        
+        hat_X.append(hat_x.detach().numpy())
+
+    hat_X = np.concatenate(hat_X)
+    return hat_X
+
 def get_Asquare(MU, VAR) :
     VAR_MEAN = np.var(MU, axis = 0)
     MEAN_VAR = np.mean(VAR, axis = 0)

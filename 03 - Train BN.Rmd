@@ -23,16 +23,17 @@ library(igraph)
 
 # labels
 path <- 'datas'
-latent.path <- 'Results/Results 28x28/DVAE-RT/alpha_0.25-beta_1.0'
-
-data_disc <- fread(paste(path, 'RT_labels_trunc - 10_7_7_5_5_5_5_5_5_5_5.csv', sep = '/'), data.table = F, sep = ",",  header = TRUE, index = TRUE)
-data_disc <- data_disc[, -1]
+latent.path <- "datas/latent_test.csv"
+labels.path <- "datas/Morpho_test - discrete - 5_5_5_5_5_10.csv"
 
 # latents
 path <- 'DATAS/MNIST'
-latent <- fread(paste(latent.path, 'latent.csv', sep = '/'), data.table = F, sep = ";", header = TRUE, index = FALSE)
+latent <- fread(latent.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
+data_disc <- fread(labels.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
 
 
+latent
+data_disc
 
 ```
 
@@ -72,11 +73,11 @@ blacklist <- expand.grid(from = cont, to = disc)
 
 start.time <- Sys.time()
 
-set.seed(123)
+set.seed(42)
 
 boot <- boot.strength(
   data = data,
-  R = 50,
+  R = 500,
   algorithm = "hc",
   algorithm.args = list(score = "bic-cg", blacklist = blacklist)
 )
@@ -92,7 +93,8 @@ Time difference of 44 mins -> 38 variables - 50 boots
 
 ```{r}
 
-write.csv(boot, paste(latent.path, "DAG.csv", sep = "/"))
+DAG.path <- "datas/DAG.csv"
+write.csv(boot, DAG.path)
 
 
 ```
