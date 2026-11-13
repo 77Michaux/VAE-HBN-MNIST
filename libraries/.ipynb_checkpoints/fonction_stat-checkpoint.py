@@ -21,11 +21,12 @@ def rap_corr(y, x):
     #rc.index = ['Rapport de Correlation']
     return rc
 
+def rapport_de_correlation(df_latent, df_labels) :
+    rc = [df_latent.apply(rap_corr, x = df_labels[col], axis = 0) for col in df_labels.columns]
+    rc = pd.concat(rc, axis = 1)
+    rc.columns = df_labels.columns
+    return rc
 
-def rapport_de_correlation(datas, labels) :
-    df = pd.DataFrame(datas, columns = list(range(1, datas.shape[-1] +1)))
-    series = pd.Series(labels)
-    return df.apply(rap_corr, x = series, axis = 0)
 
 
 def VAR_Inter_Intra(datas, labels, mode = "normal") :

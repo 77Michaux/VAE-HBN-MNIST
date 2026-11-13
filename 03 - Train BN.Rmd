@@ -83,7 +83,7 @@ boot <- boot.strength(
 )
 
 end.time <- Sys.time()
-end.time -start.time
+end.time -start.time*
 
 ```
 Time difference of 21.19556 mins -> 27 variables - 50 boots
@@ -93,9 +93,17 @@ Time difference of 44 mins -> 38 variables - 50 boots
 
 ```{r}
 
-DAG.path <- "datas/DAG.csv"
-write.csv(boot, DAG.path)
+arcs_strength <- "datas/arcs_strength.csv"
+write.csv(boot, arcs_strength)
 
+
+```
+
+
+
+```{r}
+
+boot
 
 ```
 
@@ -104,11 +112,14 @@ write.csv(boot, DAG.path)
 
 ```{r}
 
-th <- bnlearn:::threshold(boot)
+th <- 1
 th
 
 boot.kept <- boot[(boot$strength >= th) & (boot$direction >= 0.5), ]
-boot.kept
+
+avg_net <- averaged.network(boot, threshold = 0.95)
+graphviz.plot(avg_net)
+
 
 ```
 

@@ -7,8 +7,8 @@
 library(bnlearn)
 library(data.table)
 # library(reshape2)
-library(ggplot2)
-library(dplyr)
+# library(ggplot2)
+# library(dplyr)
 
 ```
 
@@ -19,7 +19,6 @@ library(dplyr)
 
 path <- "datas"
 labels <- fread(paste(path, 'MorphoMNIST_Test.csv', sep = '/'), data.table = F, sep = ",",  header = TRUE, index = FALSE)
-labels <- labels[, -6]
 labels
 
 ```

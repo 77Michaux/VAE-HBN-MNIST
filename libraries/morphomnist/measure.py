@@ -69,7 +69,7 @@ def measure_image(image, threshold: float = .5, scale: int = 4, bound_frac: floa
         print(f"Slant: {np.rad2deg(slant):.0f}°")
         print(f"Dimensions: {width:.1f} x {height:.1f}")
 
-    return area, thickness, slant, width, height, large
+    return area, thickness, slant, width, height
 
 
 
