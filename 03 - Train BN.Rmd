@@ -9,7 +9,7 @@ library(data.table)
 library(reshape2)
 library(ggplot2)
 
-library(visNetwork)
+# library(visNetwork)
 library(igraph)
 library(Rgraphviz)
 
@@ -34,8 +34,8 @@ string.names <- function(vector){
 ```{r}
 # labels
 path <- 'datas'
-latent.path <- "datas/latent_test.csv"
-labels.path <- "datas/Morpho_test - discrete - 5_5_5_5_5_10.csv"
+latent.path <- "datas/brut/latent_test.csv"
+labels.path <- "datas/MorphoMNIST/Morpho_test - discrete - 5_5_5_5_5_10.csv"
 
 # latents
 path <- 'DATAS/MNIST'
@@ -73,8 +73,8 @@ head(data)
 
 
 
-# Exclusion des relations continu → discret
-# Entrainement BN
+# Blacklist arcs continu -> discret
+# Declare BN object based on data
 
 ```{r}
 
@@ -97,16 +97,19 @@ bn <- hc(
 
 
 
+
+
 ```{r}
 
-start.time <- Sys.time()
-
+R <- 1000
 set.seed(42)
 
+start.time <- Sys.time()
 arcs.list.boot <- bn.boot(
   data = data, 
-  R = 1000, 
-  m = 4000, 
+  R = R, 
+  
+  m = nrow(data),
   algorithm = "hc",  
   algorithm.args = list(score = "bic-cg", blacklist = blacklist), 
   statistic = arcs)
@@ -121,6 +124,16 @@ end.time -start.time
 
 
 ```{r}
+end.time -start.time
+
+
+```
+
+
+
+# Compute arcs frequency
+
+```{r}
 library(dplyr)
 library(plyr)
 
@@ -128,7 +141,7 @@ combined_df <- do.call(rbind, arcs.list.boot)
 combined_df <- as.data.frame(combined_df)
 
 combined_df <- combined_df %>% group_by_all() %>% count
-combined_df$freq <- combined_df$freq/1000
+combined_df$freq <- combined_df$freq/R
 combined_df_kept <- combined_df[combined_df$freq >= 0.9,]
 
 combined_df[combined_df$from %in% names(data_disc),]
@@ -140,87 +153,91 @@ combined_df_kept
 
 ```{r}
 
-DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1k-m_4k.csv"
+DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1k-m_10k.csv"
 write.csv(combined_df, DAG.path)
 
 ```
 
 
-
-
-
-
-```{r}
-
-
-
-```
-
-
-
+# Select arcs
+## Linearly decreasing -> identification of threshold according to the log-likelyhood
 
 ```{r}
 
-scale <- c(100, 200, 500, 1000, 2000, 3000, 4000)
-mu <- c()
-sigma <- c()
-for(s in scale){
-  # print(paste(i*1000, logLik(bn.fitted, data[1:(i*1000),]))) 
-  log.lik <- c()
-  set.seed(42)
-  for(j in 1:1000){
-    index <- sapply(runif(s, 1, 10000), as.integer)
-    
-    log.lik <- c(log.lik, logLik(bn.fitted, data[index, ]))  
-  }
-  mu <- c(mu, mean(log.lik))
-  sigma <- c(sigma, sd(log.lik))
-}
-
-
-
-logLik(bn.fitted, data[1:10000, ])
-print(logLik(bn.fitted, data[1:10000, ]))
-
-data[1:10000, ]
-
-
-
-```
-
-
-
-
-
-
-
-```{r}
-
-mu
-sigma
-
-for(i in 1:length(mu)){
-  print(sigma[i]/mu[i])
-}
-
-```
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-
-# load BOOTSTRAP
-DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1000-m_2000.csv"
+# load bootstrapped arcs
+DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1k-m_10k.csv"
 df.arcs <- read.csv(DAG.path, row.names = 1)
-df.arcs.robust <- df.arcs[df.arcs$freq > 0.9, ]
+
+nb.arcs <- c()
+bn.score <- c()
+log.lik <- c()
+
+range <- 61:99
+for(i in range){
+  # first time -> number of arcs according to the threshold
+  df.arcs.robust <- df.arcs[df.arcs$freq > i/100, ]
+  nb.arcs <- c(nb.arcs, nrow(df.arcs.robust))
+  
+  # second time -> number of arcs according the log-likelyhood
+  # set the selected arcs
+  arcs(bn) <- df.arcs.robust[, 1:2]
+  bn.score <- c(bn.score, score(bn, data, type = "bic-cg"))
+  
+  # TRAIN BN
+  bn.fitted <- bn.fit(bn, data, method = "mle-cg") 
+  log.lik <- c(log.lik, logLik(bn.fitted, data))
+}
+
+
+
+
+```
+
+```{r}
+
+plot(range, nb.arcs)
+plot(nb.arcs, log.lik)
+
+plot(range, log.lik, type = "o", lty = 3, col = "blue", xlab = "threshold (> x%)", ylab = "score", ylim = c(-305000, -265000))
+lines(range, bn.score, type = "o", lty = 3, col = "red")
+legend(85, -272000, c("log-likelyhood", "bic-cg"), lty = c(3, 3), col = c("blue", "red"))
+grid()
+
+
+```
+
+
+
+
+
+```{r}
+
+
+
+df.arcs.robust.inf <- df.arcs[df.arcs$freq > 67/100, ]
+df.arcs.robust.sup <- df.arcs[df.arcs$freq > 68/100, ]
+
+
+
+nrow(df.arcs.robust.inf)
+nrow(df.arcs.robust.sup)
+
+arcs(bn) <- df.arcs.robust.inf[, 1:2]
+score(bn, data, type = "bic-cg")
+
+arcs(bn) <- df.arcs.robust.sup[, 1:2]
+score(bn, data, type = "bic-cg")
+
+
+
+```
+
+
+
+
+```{r}
+
+df.arcs.robust <- df.arcs[df.arcs$freq > 0.67, ]
 
 # load BOOTSTRAP ARCS in BN
 arcs(bn) <- df.arcs.robust[, 1:2]
@@ -240,8 +257,21 @@ set.seed(42)
 gen_sample <- rbn(bn.fitted, n = 10000)
 gen_sample
 
+path.gen <- "datas/bn_sample/boot_10k-rbn_67.csv"
+write.csv(gen_sample, path.gen)
+
 
 ```
+
+
+```{r}
+
+
+
+```
+
+
+
 
 
 # 5. Generated Samples
@@ -262,7 +292,6 @@ cpquery(bn.fitted, event = (thickness == "0"), evidence = (V_24 > obs$V_24 -sen)
 ```{r}
 
 
-bn.fitted$V_33
 
 ```
 

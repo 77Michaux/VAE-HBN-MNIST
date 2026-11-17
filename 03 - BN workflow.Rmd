@@ -77,6 +77,94 @@ bn_fitted_complete <- bn.fit(bn, data, method = "mle-cg")
 ```
 
 
+
+
+
+```{r}
+
+scale <- c(100, 200, 500, 1000, 2000, 3000, 4000)
+mu <- c()
+sigma <- c()
+for(s in scale){
+  # print(paste(i*1000, logLik(bn.fitted, data[1:(i*1000),]))) 
+  log.lik <- c()
+  set.seed(42)
+  for(j in 1:1000){
+    index <- sapply(runif(s, 1, 10000), as.integer)
+    
+    log.lik <- c(log.lik, logLik(bn.fitted, data[index, ]))  
+  }
+  mu <- c(mu, mean(log.lik))
+  sigma <- c(sigma, sd(log.lik))
+}
+
+
+
+logLik(bn.fitted, data[1:10000, ])
+print(logLik(bn.fitted, data[1:10000, ]))
+
+data[1:10000, ]
+mu
+sigma
+
+for(i in 1:length(mu)){
+  print(sigma[i]/mu[i])
+}
+
+
+```
+
+
+
+# Bootstrap on datas to identify robust arcs
+
+```{r}
+
+m.list <- 1:20
+duree <- c()
+for(m in m.list){
+  start.time <- Sys.time()
+
+  R <- 10
+  set.seed(42)
+  
+  arcs.list.boot <- bn.boot(
+    data = data, 
+    R = R, 
+    m = m *100, # nrow(data) 
+    algorithm = "hc",  
+    algorithm.args = list(score = "bic-cg", blacklist = blacklist), 
+    statistic = arcs)
+  
+  
+  end.time <- Sys.time()
+  duree <- c(duree, end.time -start.time)
+}
+
+```
+
+
+```{r}
+
+
+plot(m.list, duree)
+lines(m.list, sqrt(duree), type = "o")
+lines(m.list, m.list/8 +0.4, type = "o", col = "red")
+lines(m.list, (m.list/8 +0.4)**2, type = "o", col = "blue")
+
+new.m.list<- 1:10000
+estim.duree <- (new.m.list /800 +0.4)**2
+plot(new.m.list /100, estim.duree, col = "green")
+
+
+```
+
+
+
+
+
+
+
 # Bootstrap  to identify robust arcs
 
 ```{r}
@@ -88,7 +176,7 @@ set.seed(42)
 arcs.list.boot <- bn.boot(
   data = data, 
   R = 1000, 
-  m = 2000, 
+  m = 4000, 
   algorithm = "hc", 
   algorithm.args = list(score = "bic-cg", blacklist = blacklist), 
   statistic = arcs)

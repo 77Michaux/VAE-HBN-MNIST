@@ -17,8 +17,8 @@ library(data.table)
 
 ```{r}
 
-path <- "datas"
-labels <- fread(paste(path, 'MorphoMNIST_Test.csv', sep = '/'), data.table = F, sep = ",",  header = TRUE, index = FALSE)
+
+labels <- read.csv("datas/MorphoMNIST/MorphoMNIST_Test.csv")
 labels
 
 ```
@@ -35,6 +35,7 @@ summary(labels)
 ```{r}
 
 for(i in 1:length(names(labels))){
+  # barplot(labels[[i]], breaks = min(50, length(unique(labels[[i]]))), main = colnames(labels)[i], xlab = names(labels)[i])
   hist(labels[[i]], breaks = min(50, length(unique(labels[[i]]))), main = colnames(labels)[i], xlab = names(labels)[i])
 }
 
@@ -91,6 +92,9 @@ path <- paste(path, paste0('Morpho_test - discrete - intervals - ',  paste(effec
 path
 
 ```
+
+
+
 
 
 
