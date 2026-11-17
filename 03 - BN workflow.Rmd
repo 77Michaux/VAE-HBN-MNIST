@@ -1,0 +1,163 @@
+
+
+# libraries
+
+```{r}
+
+library(bnlearn)
+library(data.table)
+library(reshape2)
+library(ggplot2)
+
+library(visNetwork)
+library(igraph)
+library(Rgraphviz)
+
+```
+
+
+
+# Data loading
+
+```{r}
+
+
+# labels
+path <- 'datas'
+latent.path <- "datas/latent_test.csv"
+labels.path <- "datas/Morpho_test - discrete - 5_5_5_5_5_10.csv"
+
+# latents
+path <- 'DATAS/MNIST'
+latent <- fread(latent.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
+data_disc <- fread(labels.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
+
+
+latent
+data_disc
+
+```
+
+
+# Datas <- concat(latents, labels) 
+
+```{r}
+
+c(names(latent), names(data_disc))
+
+data <- cbind(latent, data_disc)
+names(data) <- c(names(latent), names(data_disc))
+data[, names(data_disc)] <- lapply(data[, names(data_disc)], as.factor)
+
+
+head(data)
+
+```
+
+
+# Exclusion des relations continu → discret
+# Entrainement BN - version with complete DAG
+
+```{r}
+
+disc <- names(data)[sapply(data, is.factor)]
+cont <- names(data)[sapply(data, is.numeric)]
+
+
+blacklist <- expand.grid(from = cont, to = disc)
+
+bn <- hc(
+  data,
+  score = "bic-cg",
+  blacklist = blacklist
+)
+
+bn_fitted_complete <- bn.fit(bn, data, method = "mle-cg") 
+
+```
+
+
+# Bootstrap  to identify robust arcs
+
+```{r}
+
+start.time <- Sys.time()
+
+set.seed(42)
+
+arcs.list.boot <- bn.boot(
+  data = data, 
+  R = 1000, 
+  m = 2000, 
+  algorithm = "hc", 
+  algorithm.args = list(score = "bic-cg", blacklist = blacklist), 
+  statistic = arcs)
+
+
+end.time <- Sys.time()
+end.time -start.time
+
+library(dplyr)
+library(plyr)
+
+arcs.bn.boot <- do.call(rbind, arcs.list.boot)
+arcs.bn.boot <- as.data.frame(arcs.bn.boot)
+
+arcs.bn.boot <- arcs.bn.boot %>% group_by_all() %>% count
+arcs.bn.boot$freq <- arcs.bn.boot$freq/1000
+
+DAG.path <- "datas/arcs_bn_boot-R_1000-m_2000.csv"
+write.csv(arcs.bn.boot, DAG.path)
+
+```
+
+
+```{r}
+
+DAG.path <- "datas/arcs_bn_boot-R_1000-m_2000.csv"
+arcs.bn.boot <- read.csv(DAG.path)[, 2:4]
+arcs.bn.boot
+
+```
+
+```{r}
+
+# arcs.bn.boot.robust <- arcs.bn.boot[arcs.bn.boot$freq >= 0.51, ]
+# arcs.bn.boot.robust <- arcs.bn.boot.robust[(arcs.bn.boot.robust$from %in% names(data_disc)) & # (arcs.bn.boot.robust$to %in% names(data_disc)), ] 
+# 
+# arcs.bn.boot.robust
+# arcs(bn) <- arcs.bn.boot.robust[, 1:2]
+# graphviz.plot(bn)
+
+
+```
+
+
+
+
+```{r}
+
+arcs.bn.boot.robust <- arcs.bn.boot[arcs.bn.boot$freq >= 0.51, ]
+arcs(bn) <- arcs.bn.boot.robust[, 1:2]
+graphviz.plot(bn)
+
+```
+
+
+```{r}
+
+bn_fitted_trunc <- bn.fit(bn, data, method = "mle-cg") 
+graphviz.plot(bn_fitted_trunc)
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+
+

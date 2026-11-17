@@ -1,6 +1,6 @@
 
 
-# Bibliothèques
+# libraries
 
 ```{r}
 
@@ -11,16 +11,27 @@ library(ggplot2)
 
 library(visNetwork)
 library(igraph)
+library(Rgraphviz)
 
 ```
 
 
 
-# Chargement des données
+# Data loading
 
 ```{r}
 
+string.names <- function(vector){
+  for(i in 1:length(names(vector))){
+    names(vector)[i] <- paste0("V_", names(vector)[i])
+  }
+  return(names(vector))
+}
 
+```
+
+
+```{r}
 # labels
 path <- 'datas'
 latent.path <- "datas/latent_test.csv"
@@ -31,11 +42,17 @@ path <- 'DATAS/MNIST'
 latent <- fread(latent.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
 data_disc <- fread(labels.path, data.table = F, sep = ",", header = TRUE, index = FALSE)
 
+names(latent) <- string.names(latent)
+# names(data_disc) <- string.names(data_disc)
 
-latent
-data_disc
+names(latent)
 
 ```
+
+
+
+
+
 
 
 # Datas <- concat(latents, labels) 
@@ -54,20 +71,31 @@ head(data)
 ```
 
 
+
+
 # Exclusion des relations continu → discret
+# Entrainement BN
 
 ```{r}
 
 disc <- names(data)[sapply(data, is.factor)]
 cont <- names(data)[sapply(data, is.numeric)]
 
+set.seed(42)
 blacklist <- expand.grid(from = cont, to = disc)
+
+bn <- hc(
+  data,
+  score = "bic-cg",
+  blacklist = blacklist
+)
+
+# bn_fitted <- bn.fit(bn, data, method = "mle-cg") 
+
 
 ```
 
 
-
-# Graphe par Bootstrap
 
 ```{r}
 
@@ -75,35 +103,17 @@ start.time <- Sys.time()
 
 set.seed(42)
 
-boot <- boot.strength(
-  data = data,
-  R = 500,
-  algorithm = "hc",
-  algorithm.args = list(score = "bic-cg", blacklist = blacklist)
-)
+arcs.list.boot <- bn.boot(
+  data = data, 
+  R = 1000, 
+  m = 4000, 
+  algorithm = "hc",  
+  algorithm.args = list(score = "bic-cg", blacklist = blacklist), 
+  statistic = arcs)
+
 
 end.time <- Sys.time()
-end.time -start.time*
-
-```
-Time difference of 21.19556 mins -> 27 variables - 50 boots
-Time difference of 26 mins -> 29 variables - 50 boots
-Time difference of 44 mins -> 38 variables - 50 boots
-
-
-```{r}
-
-arcs_strength <- "datas/arcs_strength.csv"
-write.csv(boot, arcs_strength)
-
-
-```
-
-
-
-```{r}
-
-boot
+end.time -start.time
 
 ```
 
@@ -111,125 +121,210 @@ boot
 
 
 ```{r}
+library(dplyr)
+library(plyr)
 
-th <- 1
-th
+combined_df <- do.call(rbind, arcs.list.boot)
+combined_df <- as.data.frame(combined_df)
 
-boot.kept <- boot[(boot$strength >= th) & (boot$direction >= 0.5), ]
+combined_df <- combined_df %>% group_by_all() %>% count
+combined_df$freq <- combined_df$freq/1000
+combined_df_kept <- combined_df[combined_df$freq >= 0.9,]
 
-avg_net <- averaged.network(boot, threshold = 0.95)
-graphviz.plot(avg_net)
-
-
-```
-
-
-th <- bnlearn:::threshold(arcs)
-# Tu selectionnes les arcs
-arcs[(arcs$strength >= th) & (arcs$direction >= 0.5), ]
-
-
-
-arcs <- arcs(bn)
-
-bad <- arcs[
-  arcs[, "from"] %in% cont &
-  arcs[, "to"]   %in% disc,
-]
-
-bad
-
-```{r}
-
-relations_principales <- boot[
-  boot$strength > 0.8 & boot$direction > 0.6,
-]
-relations_principales
-
-```
-
-
-
-```{r}
-
-avg_net <- averaged.network(boot, threshold = 0.95)
-graphviz.plot(avg_net)
-
-```
-
-
-
-```{r}
-
-library(Rgraphviz)
-graphviz.plot(avg_net, highlight = list(arcs = subset(boot, strength > 0.99)[,1:2]))
-
-```
-
-
-
-```{r}
-
-relations_principales[order(-relations_principales$strength -relations_principales$direction), ]
-
+combined_df[combined_df$from %in% names(data_disc),]
+combined_df[combined_df$to == "height",]
+combined_df_kept
 
 ```
 
 
 ```{r}
 
-avg_net <- averaged.network(boot, threshold = 0.8)
-avg_net 
+DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1k-m_4k.csv"
+write.csv(combined_df, DAG.path)
+
+```
+
+
+
+
+
+
+```{r}
+
+
+
+```
+
+
+
+
+```{r}
+
+scale <- c(100, 200, 500, 1000, 2000, 3000, 4000)
+mu <- c()
+sigma <- c()
+for(s in scale){
+  # print(paste(i*1000, logLik(bn.fitted, data[1:(i*1000),]))) 
+  log.lik <- c()
+  set.seed(42)
+  for(j in 1:1000){
+    index <- sapply(runif(s, 1, 10000), as.integer)
+    
+    log.lik <- c(log.lik, logLik(bn.fitted, data[index, ]))  
+  }
+  mu <- c(mu, mean(log.lik))
+  sigma <- c(sigma, sd(log.lik))
+}
+
+
+
+logLik(bn.fitted, data[1:10000, ])
+print(logLik(bn.fitted, data[1:10000, ]))
+
+data[1:10000, ]
+
+
+
+```
+
+
+
+
+
+
+
+```{r}
+
+mu
+sigma
+
+for(i in 1:length(mu)){
+  print(sigma[i]/mu[i])
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+# load BOOTSTRAP
+DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1000-m_2000.csv"
+df.arcs <- read.csv(DAG.path, row.names = 1)
+df.arcs.robust <- df.arcs[df.arcs$freq > 0.9, ]
+
+# load BOOTSTRAP ARCS in BN
+arcs(bn) <- df.arcs.robust[, 1:2]
+
+# TRAIN BN
+bn.fitted <- bn.fit(bn, data, method = "mle-cg") 
+graphviz.plot(bn.fitted)
+
+```
+
+
+# 5. Generated Samples
+
+```{r}
+
+set.seed(42)
+gen_sample <- rbn(bn.fitted, n = 10000)
+gen_sample
+
+
+```
+
+
+# 5. Generated Samples
+
+```{r}
+set.seed(42)
+obs <- gen_sample[1, ]
+obs
+
+
+sen <- 0.001
+# (V_24 > obs$V_24 -sen)&(V_24 < obs$V_24 +sen)
+cpquery(bn.fitted, event = (thickness == "0"), evidence = (V_24 > obs$V_24 -sen)&(V_24 < obs$V_24 +sen))
+#cpdist(bn.fitted, nodes = c("thickness", "area"), evidence = (V_24 > obs$V_24 -sen)&(V_24 < obs$V_24 +sen))
+```
+
+
+```{r}
+
+
+bn.fitted$V_33
+
+```
+
+
+
+```{r}
+
+cpquery(bn.fitted, event = (thickness == "2"), evidence = (V_33 >= -0.8)&(V_33 <= -0.6))
+
+```
+
+
+
+```{r}
+
+
+p_before <- cpquery(bn.fitted, event = (area == "0"), evidence = obs)$prob
+p_before
+
+obs[j] <- obs[j] + 0.1  # Incrément test
+p_after <- cpquery(bn.fitted, event = (area == "0"), evidence = obs)$prob
+abs(p_after - p_before) > 0.05
+
+
 
 ```
 
 
 ```{r}
 
-boots.path <- paste(morpho.mnist.path, 'train-morpho-trunc - 7_7_7_6_5_10 - bootstrap 200.csv', sep = '/')
-boots.path
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+```{r}
+# one_sample <- cpdist(bn.fitted, nodes = nodes(bn.fitted), evidence = (((thickness =="0")|(thickness =="1"))&(slant == "0")), n = 200, debug=T) # 
+
+one_sample
+```
+
+
+
+
 
 
 
 ```{r}
 
-write.csv(boot, boots.path)
+library(gRain)
+one_sample <- cpquery(bn.fitted, event=(slant=="0"))
+one_sample
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
