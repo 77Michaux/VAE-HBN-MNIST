@@ -19,7 +19,9 @@ library(data.table)
 
 
 labels <- read.csv("datas/MorphoMNIST/MorphoMNIST_Test.csv")
+labels <- labels[, 2:ncol(labels)]
 labels
+
 
 ```
 
