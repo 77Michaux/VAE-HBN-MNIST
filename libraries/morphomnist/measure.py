@@ -71,71 +71,18 @@ def measure_image(image, threshold: float = .5, scale: int = 4, bound_frac: floa
 
     return area, thickness, slant, width, height
 
+def get_Y_disc_from_X(X, threshold = 0.5, scale = 4, batchsize = 10) :
 
+    def measure_batch(X) :
+        return pd.Series(np.array(measure_image(X, threshold = threshold, scale=scale, verbose = 0))) # precision  threshold = 0.35, scale=10,
+    
+    batch_range = range(0, X[:].shape[0] +1, batchsize)
+    
+    Y_cont_verif = []
+    for i, batch in enumerate(batch_range[:-1]) :
+        print(f"Epoch {i+1}/{len(batch_range) -1}")
+        Y_cont_verif.append(pd.DataFrame(map(measure_batch, X[batch:batch_range[i +1], 0])))
 
-
-def _measure_image_unpack(arg):
-    return measure_image(*arg)
-
-
-def measure_batch(images, threshold: float = .5, scale: int = 4, bound_frac: float = .02,
-                  pool: multiprocessing.Pool = None, chunksize: int = 100) -> pd.DataFrame:
-    """Computes morphometrics for a batch of images.
-
-    Parameters
-    ----------
-    images : (N, H, W) array_like
-        Input image batch, indexed along the first dimension.
-    threshold : float, optional
-        A relative threshold between 0 and 1. The upsampled image will be binarised at this fraction
-        between its minimum and maximum values.
-    scale : int, optional
-        Upscaling factor for subpixel morphological analysis (>1).
-    bound_frac : float, optional
-        Fraction of image mass to discard along each dimension when computing the bounding
-        parallelogram.
-    pool : multiprocessing.Pool, optional
-        A pool of worker processes for parallel processing. Defaults to sequential computation.
-    chunksize : int
-        Size of the chunks in which to split the batch for parallel processing. Ignored if
-        `pool=None`.
-
-    Returns
-    -------
-    pandas.DataFrame
-        A data frame with one row for each image, containing the following columns:
-
-        - `area`: Total area/image mass.
-        - `length`: Length of the estimated skeleton.
-        - `thickness`: Mean thickness along the skeleton.
-        - `slant`: Horizontal shear, in radians.
-        - `width`: Width of the bounding parallelogram.
-        - `height`: Height of the bounding parallelogram.
-
-    Notes
-    -----
-    If the `tqdm` package is installed, this function will display a fancy progress bar with ETA.
-    Otherwise, it will print a plain text progress message.
-    """
-    images = np.asarray(images)
-    args = ((img, threshold, scale, bound_frac, False) for img in images)
-    if pool is None:
-        gen = map(_measure_image_unpack, args)
-    else:
-        gen = pool.imap(_measure_image_unpack, args, chunksize=chunksize)
-
-    try:
-        import tqdm
-        gen = tqdm.tqdm(gen, total=len(images), unit='img', ascii=True)
-    except ImportError:
-        def plain_progress(g):
-            print(f"\rProcessing images: {0}/{len(images)}", end='')
-            for i, res in enumerate(g):
-                print(f"\rProcessing images: {i + 1}/{len(images)}", end='')
-                yield res
-            print()
-        gen = plain_progress(gen)
-
-    results = list(gen)
-    df = pd.DataFrame(results)
-    return df
+    Y_cont_verif = pd.concat(Y_cont_verif) 
+    Y_cont_verif.index = np.arange(X.shape[0])
+    return Y_cont_verif

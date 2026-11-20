@@ -6,16 +6,16 @@ import pandas as pd
 import torch
 # from IPython.display import clear_output
 
-def get_MU_LOGVAR(net, X_train, batchsize = 200) :
+def get_MU_LOGVAR(net, X, batchsize = 200) :
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    batchrange = np.arange(0, X_train.shape[0] +1, batchsize)
+    batchrange = np.arange(0, X.shape[0] +1, batchsize)
     MU = []
     LOGVAR = []
     for b, batch in enumerate(batchrange[:-1]) :
-        X = X_train[batch:batchrange[b +1]].astype(np.float32) /255.
-        X = torch.from_numpy(X)
-        X = X.to(device)
-        _, mu, logvar, _ = net.vae.pred(X)
+        x = X[batch:batchrange[b +1]].astype(np.float32) /255.
+        x = torch.from_numpy(x)
+        x = x.to(device)
+        _, mu, logvar, _ = net.vae.pred(x)
         
         MU.append(mu.detach().numpy())
         LOGVAR.append(logvar.detach().numpy())

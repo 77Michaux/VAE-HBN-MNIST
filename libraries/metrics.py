@@ -37,12 +37,22 @@ def inv_bpp(bpp_val, old_dims = 512**2, L = 8) :
     return bpp_val *old_dims /L # = old_dims/CR
 
 
+def get_M(P, Q) :
+    M = P+Q
+    M["E"] = 0.0
+    
+    M.loc[P.index] = P/2
+    M.loc[Q.index] = M.loc[Q.index] +Q/2
+    return M
+
 def D_KL(P, Q) : 
     return (P*np.log(P/Q)).sum()
 
-def Jensen_Shannon(P, Q) :
-    M = (P+Q)/2
-    return (D_KL(P, M) +D_KL(Q, M)) /2 
+def Jensen_Shannon(X, Y) :
+    P = X.copy()
+    Q = Y.copy()
+    M = get_M(P.copy(), Q.copy())
+    return (D_KL(P, M.loc[P.index]) +D_KL(Q, M.loc[Q.index])) /2 
 
 
 def format_pow10(x):

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 # from libraries.model_parts.cnn import Encoder, Decoder
-from libraries.model_parts.loss import MSE, BCE, KLD, COV
+from libraries.model_parts.loss import MSE, BCE, KLD, COV, CORR
 
 # Base of VAE
 class VAE_based(nn.Module):
@@ -68,11 +68,12 @@ class TCVAE(nn.Module):
         loss_items = losses[1:-1]
         loss = losses[0]
 
-        ratio_COV = Z.shape[1]
+        # ratio_COV = Z.shape[1]
+        ratio_image = float(X.shape.numel()) /100
         
-        loss_COV = COV(Z)
+        loss_COV = CORR(Z)
         loss = loss + gamma *loss_COV
-        return (loss, ) + loss_items + (loss_COV.item()/ratio_COV,) 
+        return (loss, ) + loss_items + (loss_COV.item()/ratio_image,) 
         # loss, loss.item(), loss_RECO.items(), loss_KLD.items(), loss_COV.items()
         
 

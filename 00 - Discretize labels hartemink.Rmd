@@ -18,8 +18,8 @@ library(data.table)
 ```{r}
 
 
-labels <- read.csv("datas/MorphoMNIST/MorphoMNIST_Test.csv")
-labels <- labels[, 2:ncol(labels)]
+labels <- read.csv("datas/MorphoMNIST/Y_cont.csv")
+labels <- labels[, 1:ncol(labels)]
 labels
 
 
@@ -56,7 +56,10 @@ sapply(labels, class)
 
 ```{r}
            #   "area" "thickness" "slant" "width" "height" "number" 
-effectifs <- c(  5,     5,           5,      5,       5,      10)
+eff <- 10
+
+effectifs <- c(eff,   eff,         eff,    eff,     eff,      10)
+
 data_disc <- discretize(
   labels,
   method  = "hartemink",
@@ -89,24 +92,24 @@ data_disc
 
 ```{r}
 
-path <- "datas"
-path <- paste(path, paste0('Morpho_test - discrete - intervals - ',  paste(effectifs, collapse = "_"), '.csv'), sep = '/')
-path
+
+intervals <- c()
+for(i in 1:5){
+  intervals <- c(intervals, levels(data_disc[[i]]))
+}
+intervals <- matrix(intervals, nrow = eff)
+intervals <- as.data.frame(intervals)
+colnames(intervals) <-colnames(data_disc)[1:5]
+intervals
+
+# intervals.path <-
+intervals.path <- paste0("datas/MorphoMNIST/intervals - ", paste(effectifs, collapse = "_"), '.csv')
+intervals.path
+
+write.csv(intervals, intervals.path, row.names = FALSE)
 
 ```
 
-
-
-
-
-
-```{r}
-
-
-write.csv(data_disc, path,  row.names = FALSE)
-          
-          
-```
 
 
 
@@ -123,7 +126,7 @@ data_disc
 
 ```{r}
 
-path <- "datas"
+path <- "datas/MorphoMNIST"
 path <- paste(path, paste0('Morpho_test - discrete - ',  paste(effectifs, collapse = "_"), '.csv'), sep = '/')
 path
 

@@ -16,15 +16,17 @@ def BCE(X: torch.Tensor, hat_X: torch.Tensor, reduction='sum') : # l'hypothèse 
 def KLD(Z_MU: torch.Tensor, Z_LOGVAR: torch.Tensor) : # 
     return -1./2 * torch.sum(Z_MU.pow(2) + Z_LOGVAR.exp() -Z_LOGVAR -1)
 
-# Total Corrélation
-# def COV(Z) :
-#     Z_cov = torch.cov(Z).T
-#     return 0.5* torch.sum(Z_cov**2) - torch.sum(torch.diag(Z_cov))
+# Total Correlation via covariance minimization 
 def COV(Z):
     B = Z.shape[0]
     Z_centered = Z - Z.mean(dim=0)  # Centrage explicite
     Z_cov = (Z_centered.T @ Z_centered)/(B-1)  # Covariance non biaisée
     return torch.abs(Z_cov -torch.diag(Z_cov)).sum() 
+
+def CORR(Z):
+    D = Z.shape[1]
+    Z_CORR = torch.corrcoef(Z.T)-torch.eye(D)
+    return torch.abs(Z_CORR).sum()
 
 
     

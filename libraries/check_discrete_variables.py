@@ -4,9 +4,11 @@ import pandas as pd
 
 import torch
 
+
+
 """
 
-Pour verifier si les variables discretes associées au latents dans l'échantillonnage du BN, ilnous faut :
+Pour verifier si les variables discretes associées au latents dans l'échantillonnage du BN, il nous faut :
     - latent_samp : les latents échantillonnés
     - label_disc_samp : les variables discretes échantillonnées associées aux "latent_samp"
     - label_samp_inter : les intervalles continus associé aux "label_disc"  
@@ -15,8 +17,6 @@ Pour verifier si les variables discretes associées au latents dans l'échantill
     - samp_dist : une méthode de mesure de la distance entre les "label_cont_samp" et les "label_disc_samp" via les "label_samp_inter"
 
 """
-
-
 
 def mode_to_df(modes, path) : 
     reps = []
