@@ -154,7 +154,7 @@ combined_df_kept
 
 ```{r}
 
-DAG.path <- "datas/MorphoMNIST/10_10/arcs/bn_boot-R_1k-m_10k.csv"
+DAG.path <- "datas/MorphoMNIST/10_10/arcs/bn_boot-R_500k-m_10k.csv"
 write.csv(combined_df, DAG.path)
 
 ```
@@ -199,9 +199,9 @@ for(i in range){
 plot(range, nb.arcs)
 plot(nb.arcs, log.lik)
 
-plot(range, log.lik, type = "o", lty = 3, col = "blue", xlab = "threshold (> x%)", ylab = "score", ylim = c(-315000, -280000))
+plot(range, log.lik, type = "o", lty = 3, col = "blue", xlab = "threshold (> x%)", ylab = "score", ylim = c(min(bn.score), max(log.lik)))
 lines(range, bn.score, type = "o", lty = 3, col = "red")
-legend(85, -280000, c("log-likelyhood", "bic-cg"), lty = c(3, 3), col = c("blue", "red"))
+legend(85, max(log.lik)*1.005, c("log-likelyhood", "bic-cg"), lty = c(3, 3), col = c("blue", "red"))
 grid()
 
 
@@ -258,7 +258,7 @@ set.seed(42)
 gen_sample <- rbn(bn.fitted, n = 10000)
 gen_sample
 
-path.gen <- "datas/MorphoMNIST/7_7_7_7_7_10/boot_10k-rbn_99.csv"
+path.gen <- "datas/MorphoMNIST/10_10/boot_10k-rbn_99.csv"
 write.csv(gen_sample, path.gen)
 
 
