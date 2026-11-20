@@ -1,4 +1,5 @@
 import multiprocessing
+from IPython.display import clear_output
 from typing import NamedTuple
 
 import numpy as np
@@ -71,6 +72,7 @@ def measure_image(image, threshold: float = .5, scale: int = 4, bound_frac: floa
 
     return area, thickness, slant, width, height
 
+
 def get_Y_disc_from_X(X, threshold = 0.5, scale = 4, batchsize = 10) :
 
     def measure_batch(X) :
@@ -80,6 +82,7 @@ def get_Y_disc_from_X(X, threshold = 0.5, scale = 4, batchsize = 10) :
     
     Y_cont_verif = []
     for i, batch in enumerate(batch_range[:-1]) :
+        clear_output()
         print(f"Epoch {i+1}/{len(batch_range) -1}")
         Y_cont_verif.append(pd.DataFrame(map(measure_batch, X[batch:batch_range[i +1], 0])))
 

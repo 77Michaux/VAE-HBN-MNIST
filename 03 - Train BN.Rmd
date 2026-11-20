@@ -35,7 +35,7 @@ string.names <- function(vector){
 # labels
 path <- 'datas'
 latent.path <- "datas/brut/z_act_mix.csv"
-labels.path <- "datas/MorphoMNIST/10_10/Y_disc.csv"
+labels.path <- "datas/MorphoMNIST/5_10/Y_disc.csv"
 
 # latents
 path <- 'DATAS/MNIST'
@@ -154,7 +154,7 @@ combined_df_kept
 
 ```{r}
 
-DAG.path <- "datas/MorphoMNIST/10_10/arcs/bn_boot-R_500k-m_10k.csv"
+DAG.path <- "datas/MorphoMNIST/_10/arcs/bn_boot-R_1k-m_10k.csv"
 write.csv(combined_df, DAG.path)
 
 ```
@@ -166,7 +166,7 @@ write.csv(combined_df, DAG.path)
 ```{r}
 
 # load bootstrapped arcs
-# DAG.path <- "datas/bn_arcs/arcs_bn_boot-R_1k-m_10k.csv"
+DAG.path <- "datas/MorphoMNIST/5_10/arcs/bn_boot-R_1k-m_10k.csv"
 df.arcs <- read.csv(DAG.path, row.names = 1)
 
 nb.arcs <- c()
@@ -258,7 +258,7 @@ set.seed(42)
 gen_sample <- rbn(bn.fitted, n = 10000)
 gen_sample
 
-path.gen <- "datas/MorphoMNIST/10_10/boot_10k-rbn_99.csv"
+path.gen <- "datas/MorphoMNIST/5_10/boot_10k-rbn_99.csv"
 write.csv(gen_sample, path.gen)
 
 

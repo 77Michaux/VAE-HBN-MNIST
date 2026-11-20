@@ -4,8 +4,6 @@ import pandas as pd
 
 import torch
 
-
-
 """
 
 Pour verifier si les variables discretes associées au latents dans l'échantillonnage du BN, il nous faut :
